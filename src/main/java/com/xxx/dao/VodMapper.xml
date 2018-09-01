@@ -130,7 +130,7 @@
       <include refid="Example_Where_Clause" />
     </if>
   </delete>
-  <insert id="insert" parameterType="com.xxx.entity.Vod" >
+  <insert id="insert" parameterType="com.xxx.entity.Vod" useGeneratedKeys="true" keyProperty="id">
     insert into tb_vod (id, title, name, 
       post_url, screenshot_url, series_id, 
       vod_type, country_type, publish_date, 
@@ -142,7 +142,7 @@
       #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}, #{content,jdbcType=LONGVARCHAR}
       )
   </insert>
-  <insert id="insertSelective" parameterType="com.xxx.entity.Vod" >
+  <insert id="insertSelective" parameterType="com.xxx.entity.Vod" useGeneratedKeys="true" keyProperty="id">
     insert into tb_vod
     <trim prefix="(" suffix=")" suffixOverrides="," >
       <if test="id != null" >

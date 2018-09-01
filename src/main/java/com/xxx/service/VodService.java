@@ -8,6 +8,8 @@ import com.xxx.entity.Vod;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
+
 /**
  * @Auther: Administrator
  * @Date: 2018/8/31 16:26
@@ -27,7 +29,7 @@ public class VodService {
 
 
     public void addVod(String name, String title, String post_url, String content, String screenshot_url, int vod_type,
-                      int country_type, String[] downloadUrls, String[] magnetUrls, String[] sourceName) {
+                       int country_type, Date publishDate, String[] downloadUrls, String[] magnetUrls, String[] sourceName) {
         Vod vod = new Vod();
         vod.setContent(content);
         vod.setCountryType(country_type);
@@ -35,27 +37,22 @@ public class VodService {
         vod.setTitle(title);
         vod.setPostUrl(post_url);
         vod.setScreenshotUrl(screenshot_url);
+        vod.setPublishDate(publishDate);
         vod.setVodType(vod_type);
 
-        if (downloadUrls.length == 1) {
+        vodMapper.insertSelective(vod);
+
+        for (int i = 0; i < sourceName.length; i++) {
             DownloadUrl downloadUrlEntity = new DownloadUrl();
-            downloadUrlEntity.setDownloadUrl(downloadUrls[0]);
-            downloadUrlEntity.setMagnetUrl(magnetUrls[0]);
-            downloadUrlEntity.setSourceName(sourceName[0]);
-        } else {
-            for (int i = 0; i < sourceName.length; i++) {
-                DownloadUrl downloadUrlEntity = new DownloadUrl();
-                downloadUrlEntity.setSourceName(sourceName[i]);
-                if (i < downloadUrls.length) {
-                    downloadUrlEntity.setDownloadUrl(downloadUrls[i]);
-                }
-                if (i < magnetUrls.length) {
-                    downloadUrlEntity.setMagnetUrl(magnetUrls[i]);
-                }
-
-                downloadUrlMapper.insertSelective(downloadUrlEntity);
+            downloadUrlEntity.setSourceName(sourceName[i]);
+            if (i < downloadUrls.length) {
+                downloadUrlEntity.setDownloadUrl(downloadUrls[i]);
             }
-
+            if (i < magnetUrls.length) {
+                downloadUrlEntity.setMagnetUrl(magnetUrls[i]);
+            }
+            downloadUrlEntity.setVodId(vod.getId());
+            downloadUrlMapper.insertSelective(downloadUrlEntity);
         }
     }
 }

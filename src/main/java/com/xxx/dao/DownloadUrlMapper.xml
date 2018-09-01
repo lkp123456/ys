@@ -101,7 +101,7 @@
       <include refid="Example_Where_Clause" />
     </if>
   </delete>
-  <insert id="insert" parameterType="com.xxx.entity.DownloadUrl" >
+  <insert id="insert" parameterType="com.xxx.entity.DownloadUrl" useGeneratedKeys="true" keyProperty="id">
     insert into tb_download_url (id, vod_id, source_name, 
       download_url, magnet_url, create_time, 
       update_time)
@@ -109,7 +109,7 @@
       #{downloadUrl,jdbcType=VARCHAR}, #{magnetUrl,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, 
       #{updateTime,jdbcType=TIMESTAMP})
   </insert>
-  <insert id="insertSelective" parameterType="com.xxx.entity.DownloadUrl" >
+  <insert id="insertSelective" parameterType="com.xxx.entity.DownloadUrl" useGeneratedKeys="true" keyProperty="id">
     insert into tb_download_url
     <trim prefix="(" suffix=")" suffixOverrides="," >
       <if test="id != null" >

@@ -217,7 +217,7 @@ public class HttpClientFactory {
             int reqStatus = response.getStatusLine().getStatusCode();
             HttpEntity entity = response.getEntity();
             if (entity != null) {
-                strReturn = EntityUtils.toString(entity, "UTF-8");
+                strReturn = EntityUtils.toString(entity, "GB2312");
             }
             if (reqStatus == 200) {
                 LOGGER.info("\n\t正常响应数据:\n" + strReturn);
@@ -262,6 +262,9 @@ public class HttpClientFactory {
             HttpPost post = new HttpPost(domainUrl);
             post.setHeader("Content-type", "application/json; charset=UTF-8");
             post.setHeader("Accept", "application/json; charset=UTF-8");
+
+
+
             post.setEntity(new StringEntity(jsonDatagram, Charset.forName("UTF-8")));
             response = httpClient.execute(post);
             int reqStatus = response.getStatusLine().getStatusCode();
