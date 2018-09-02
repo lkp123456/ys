@@ -6,10 +6,7 @@ import com.xxx.utils.HttpClientFactory;
 import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Attribute;
-import org.jsoup.nodes.Attributes;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
+import org.jsoup.nodes.*;
 import org.jsoup.select.Elements;
 
 import java.io.ByteArrayInputStream;
@@ -25,35 +22,34 @@ import java.util.concurrent.*;
  */
 public class Crawler {
 
-    private static ThreadPoolExecutor pool = new ThreadPoolExecutor(5, 20, 200, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
+    private static ThreadPoolExecutor pool = new ThreadPoolExecutor(50, 800, 200, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
 
-    private static String baseUrl = "http://www.ygdy8.com";
+    private static String baseUrl = "http://www.ygdy8.net";
 
     public static void main(String[] args) throws InterruptedException, ExecutionException, ParseException {
 
-        Crawler crawler = new Crawler();
 
-
-        CompletionService<String> objectCompletionService = new ExecutorCompletionService<>(pool);
-        int taskSize = 103;
+        //获取列表页文档
+        CompletionService<Document> objectCompletionService = new ExecutorCompletionService<>(pool);
+        int taskSize = 33;
         for (int i = 1; i <= taskSize; i++) {
-            String url = "http://www.ygdy8.com/html/gndy/china/list_4_" + i + ".html";
+            String url = "http://www.ygdy8.net/html/gndy/rihan/list_6_"+i+".html";
             HttpClientFactory instance = HttpClientFactory.getInstance();
-            Crawler.GetHtmlTask getHtmlTask = crawler.new GetHtmlTask(null, instance, url);
+            Crawler.GetHtmlTask getHtmlTask = new Crawler().new GetHtmlTask(null, instance, url);
             Thread.sleep(10);
             objectCompletionService.submit(getHtmlTask);
             System.out.println("submit task size = " + i);
         }
-
+        //解析列表页文档url
         CompletionService<List<String>> parseCompletionService = new ExecutorCompletionService<>(pool);
         for (int i = 1; i <= taskSize; i++) {
-            Future<String> future = objectCompletionService.take();
-            String htmlData = future.get();
+            Future<Document> future = objectCompletionService.take();
+            Document htmlData = future.get();
 
             System.out.println("获取第" + i + "页html数据");
             //拿到html数据解析URL
-
-            Crawler.ParseHtmlTask parseHtmlTask = crawler.new ParseHtmlTask(htmlData);
+            Thread.sleep(1000);
+            Crawler.ParseHtmlTask parseHtmlTask = new Crawler().new ParseHtmlTask(htmlData);
             parseCompletionService.submit(parseHtmlTask);
 
         }
@@ -78,8 +74,9 @@ public class Crawler {
         for (String url : urls) {
             String detailUrl = baseUrl + url;
             HttpClientFactory instance = HttpClientFactory.getInstance();
+            System.out.println("@@@@@@@@@@@@@" + detailUrl);
             System.out.println("==================start commit detail page===========" + (i++));
-            Crawler.GetHtmlTask getHtmlTask = crawler.new GetHtmlTask(null, instance, detailUrl);
+            Crawler.GetHtmlTask getHtmlTask = new Crawler().new GetHtmlTask(null, instance, detailUrl);
             objectCompletionService.submit(getHtmlTask);
         }
 
@@ -88,10 +85,10 @@ public class Crawler {
         int j = 0;
         for (String url : urls) {
             try {
-                Future<String> future = objectCompletionService.take();
-                String htmlData = future.get();
+                Future<Document> future = objectCompletionService.take();
+                Document htmlData = future.get();
                 System.out.println("==================start  parseDetailHtmlTask===================" + (j++));
-                Crawler.ParseDetailHtmlTask parseDetailHtmlTask = crawler.new ParseDetailHtmlTask(htmlData, url);
+                Crawler.ParseDetailHtmlTask parseDetailHtmlTask = new Crawler().new ParseDetailHtmlTask(htmlData, url);
                 parseDetailHtmlTaskService.submit(parseDetailHtmlTask);
 
             } catch (Exception e) {
@@ -104,13 +101,17 @@ public class Crawler {
         for (String url : urls) {
             try {
                 Future<Map> take = parseDetailHtmlTaskService.take();
-                Map map = take.get();
 
-                HttpClientFactory instance = HttpClientFactory.getInstance();
-                map.put("key", "qewqwasdasdsfsqwaawxcfgcegfcd");
-                String s = JSON.toJSONString(map);
-                String s1 = instance.postData("http://localhost:8080/addVod", s);
-                System.out.println(s1);
+                boolean done = take.isDone();
+                if (done) {
+                    Map map = take.get();
+                    HttpClientFactory instance = HttpClientFactory.getInstance();
+                    map.put("key", "qewqwasdasdsfsqwaawxcfgcegfcd");
+                    String s = JSON.toJSONString(map);
+                    String s1 = instance.postData("http://localhost:8080/addVod", s);
+                    System.out.println(s1);
+                }
+
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -129,18 +130,16 @@ public class Crawler {
     private class ParseHtmlTask implements Callable<List<String>> {
 
         List hrefList = new LinkedList<String>();
-        private String htmlData;
+        private Document htmlData;
 
-        public ParseHtmlTask(String htmlData) {
+        public ParseHtmlTask(Document htmlData) {
             this.htmlData = htmlData;
         }
 
         @Override
         public List<String> call() throws Exception {
-            System.out.println(htmlData);
-            ByteArrayInputStream tInputStringStream = new ByteArrayInputStream(htmlData.getBytes("GB2312"));
-            Document document = Jsoup.parse(tInputStringStream, "UTF-8", baseUrl);
-            Elements ulinks = document.getElementsByClass("ulink");
+
+            Elements ulinks = htmlData.getElementsByClass("ulink");
 
             for (int j = 0; j < ulinks.size(); j++) {
                 if (j % 2 == 0) {
@@ -156,7 +155,7 @@ public class Crawler {
         }
     }
 
-    private class GetHtmlTask implements Callable<String> {
+    private class GetHtmlTask implements Callable<Document> {
         private Map headers;
         private HttpClientFactory instance;
         private String url;
@@ -168,18 +167,21 @@ public class Crawler {
         }
 
         @Override
-        public String call() throws Exception {
-            return instance.get(url, headers);
+        public Document call() throws Exception {
+            Document document = Jsoup.connect(url).userAgent("Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36")
+                    .timeout(10000)
+                    .get();
+            return document;
         }
     }
 
 
     private class ParseDetailHtmlTask implements Callable<Map> {
 
-        private String htmlData;
+        private Document htmlData;
         private String url;
 
-        public ParseDetailHtmlTask(String htmlData, String url) {
+        public ParseDetailHtmlTask(Document htmlData, String url) {
             this.htmlData = htmlData;
             this.url = url;
         }
@@ -200,37 +202,41 @@ public class Crawler {
             }
             //countryType 0国内 1欧美 2日韩
 
-            if (url.contains("/jddy/")) {
-                vod.setCountryType(0);
-            } else if (url.contains("/oumei/")) {
-                vod.setCountryType(1);
-            } else if (url.contains("gndy/rihan/")) {
-                vod.setCountryType(2);
-            } else if (url.contains("/hytv/")) {
-                vod.setCountryType(0);
-            } else if (url.contains("/oumeitv/")) {
-                vod.setCountryType(1);
-            } else if (url.contains("/rihantv/")) {
-                vod.setCountryType(2);
-            }else {
-                vod.setCountryType(0);
-            }
+//            if (url.contains("/jddy/")) {
+//                vod.setCountryType(0);
+//            } else if (url.contains("/oumei/")) {
+//                vod.setCountryType(1);
+//            } else if (url.contains("gndy/rihan/")) {
+//                vod.setCountryType(2);
+//            } else if (url.contains("/hytv/")) {
+//                vod.setCountryType(0);
+//            } else if (url.contains("/oumeitv/")) {
+//                vod.setCountryType(1);
+//            } else if (url.contains("/rihantv/")) {
+//                vod.setCountryType(2);
+//            }else {
+//                vod.setCountryType(0);
+//            }
 
+            vod.setCountryType(2);
 
-            Document document = Jsoup.parse(htmlData);
-            Elements h1 = document.getElementsByTag("h1");
+            Elements h1 = htmlData.getElementsByTag("h1");
             for (Element element : h1) {
                 Elements font = element.getElementsByTag("font");
                 String title = font.text();
                 vod.setTitle(title);//title
+                int m = title.indexOf("《");
+                int n = title.indexOf("》");
+
                 System.out.println(title);
-                int i = title.indexOf("《");
-                int i1 = title.indexOf("》");
-                String name = title.substring(i + 1, i1);
+                System.out.println(m+"   "+n);
+                String name = title.substring(m + 1, n);
+                System.out.println(name);
+
                 vod.setName(name);
             }
 
-            Element zoom = document.getElementById("Zoom");//只有1个
+            Element zoom = htmlData.getElementById("Zoom");//只有1个
             Elements imgs = zoom.getElementsByTag("img");//两个
             for (int i = 0; i < imgs.size(); i++) {
                 Element img = imgs.get(i);
@@ -243,10 +249,10 @@ public class Crawler {
                 }
             }
 
-            Elements ps = zoom.getElementsByTag("p");
+            Elements ps = zoom.getElementsByAttributeValue("style", "FONT-SIZE: 12px");
             StringBuilder stringBuilder = new StringBuilder();
             for (Element p : ps) {
-                String ownText = p.ownText();
+                String ownText = p.text();
 
                 String[] split = ownText.split("◎");
 
