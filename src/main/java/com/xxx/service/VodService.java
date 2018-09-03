@@ -1,14 +1,18 @@
 package com.xxx.service;
 
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import com.xxx.dao.DownloadUrlMapper;
 import com.xxx.dao.SeriesMapper;
 import com.xxx.dao.VodMapper;
 import com.xxx.entity.DownloadUrl;
 import com.xxx.entity.Vod;
+import com.xxx.entity.VodExample;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * @Auther: Administrator
@@ -54,5 +58,15 @@ public class VodService {
             downloadUrlEntity.setVodId(vod.getId());
             downloadUrlMapper.insertSelective(downloadUrlEntity);
         }
+    }
+
+    public PageInfo<Vod> getVods(int vodType,int countryType,int startPage,int pageSize){
+        PageHelper.startPage(startPage,pageSize);
+        VodExample vodExample = new VodExample();
+        vodExample.createCriteria().andVodTypeEqualTo(vodType).andCountryTypeEqualTo(countryType);
+        vodExample.setOrderByClause("publish_date DESC");
+        List<Vod> vods = vodMapper.selectByExample(vodExample);
+        PageInfo<Vod> vodPageInfo = new PageInfo<>(vods);
+        return vodPageInfo;
     }
 }
