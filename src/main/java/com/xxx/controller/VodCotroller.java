@@ -4,17 +4,23 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.PageInfo;
 import com.xxx.base.CategoryURI;
+import com.xxx.entity.DownloadUrl;
+import com.xxx.entity.Series;
 import com.xxx.entity.Vod;
+import com.xxx.service.DownloadUrlService;
+import com.xxx.service.SeriesService;
 import com.xxx.service.VodService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Date;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -25,6 +31,10 @@ public class VodCotroller {
 
     @Autowired
     private VodService vodService;
+    @Autowired
+    private DownloadUrlService downloadUrlService;
+    @Autowired
+    private SeriesService seriesService;
 
     @ModelAttribute
     public void header(Model model) {
@@ -70,22 +80,46 @@ public class VodCotroller {
     public String index(Model model) {
         log.debug("index");
         //最新
-        PageInfo<Vod> chinaVods = vodService.getVods(0, 0, 1, 10);
-        PageInfo<Vod> oumeiVods = vodService.getVods(0, 1, 1, 10);
-        PageInfo<Vod> rihanVods = vodService.getVods(0, 2, 1, 10);
-        PageInfo<Vod> chinaTVs = vodService.getVods(1, 0, 1, 10);
-        PageInfo<Vod> oumeiTVs = vodService.getVods(1, 1, 1, 10);
-        PageInfo<Vod> rihanTVs = vodService.getVods(1, 2, 1, 10);
+        PageInfo<Vod> lastVods = vodService.getVods(0, null, 1, 20);
+        PageInfo<Vod> lastTVs = vodService.getVods(1, null, 1, 20);
 
-        model.addAttribute("chinaVods",chinaVods);
-        model.addAttribute("oumeiVods",oumeiVods);
-        model.addAttribute("rihanVods",rihanVods);
-        model.addAttribute("chinaTVs",chinaTVs);
-        model.addAttribute("oumeiTVs",oumeiTVs);
-        model.addAttribute("rihanTVs",rihanTVs);
+        PageInfo<Series> series = seriesService.getSeries();
+        model.addAttribute("series",series);
+//        PageInfo<Vod> chinaVods = vodService.getVods(0, 0, 1, 10);
+//        PageInfo<Vod> oumeiVods = vodService.getVods(0, 1, 1, 10);
+//        PageInfo<Vod> rihanVods = vodService.getVods(0, 2, 1, 10);
+//        PageInfo<Vod> chinaTVs = vodService.getVods(1, 0, 1, 10);
+//        PageInfo<Vod> oumeiTVs = vodService.getVods(1, 1, 1, 10);
+//        PageInfo<Vod> rihanTVs = vodService.getVods(1, 2, 1, 10);
+
+        model.addAttribute("lastVods",lastVods);
+        model.addAttribute("lastTVs",lastTVs);
+
+//        model.addAttribute("chinaVods",chinaVods);
+//        model.addAttribute("oumeiVods",oumeiVods);
+//        model.addAttribute("rihanVods",rihanVods);
+//        model.addAttribute("chinaTVs",chinaTVs);
+//        model.addAttribute("oumeiTVs",oumeiTVs);
+//        model.addAttribute("rihanTVs",rihanTVs);
 
         return "index";
     }
+
+    @RequestMapping("/{vodType}/{id}.html")
+    @ResponseBody
+    public Vod showVod(@PathVariable long id){
+        Vod vodById = vodService.getVodById(id);
+        return vodById;
+    }
+
+    @RequestMapping("/showDownloadLinks/{id}.html")
+    @ResponseBody
+    public List<DownloadUrl> showDownloadLinks(@PathVariable(name = "id",required = true) long vodId){
+        List<DownloadUrl> downloadUrls = downloadUrlService.getDownloadUrls(vodId);
+        return downloadUrls;
+    }
+
+
 
     @RequestMapping(value = "/addVod", method = RequestMethod.POST)
     @ResponseBody

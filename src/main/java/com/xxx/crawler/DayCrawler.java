@@ -10,6 +10,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import javax.print.attribute.standard.DateTimeAtCompleted;
 import java.io.ByteArrayInputStream;
 import java.text.ParseException;
 import java.util.*;
@@ -21,23 +22,34 @@ import java.util.concurrent.*;
  * @Date: 2018/8/13 11:19
  * @Description:
  */
-public class Crawler {
+public class DayCrawler {
 
     private static ThreadPoolExecutor pool = new ThreadPoolExecutor(5, 20, 200, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
 
     private static String baseUrl = "http://www.ygdy8.com";
+    static Date crawlDate = null ;
 
     public static void main(String[] args) throws InterruptedException, ExecutionException, ParseException {
+        //main参数指定0:vodType(0:mv 1:tv) 1:countryType(0:china 1:oumei 2:rihan) 2:日期(格式:yyyy-Mm-dd)
+        //           3:baseUrl 4:startPath 5:pageSize
+        int vodType= Integer.parseInt(args[0]);
+        int country= Integer.parseInt(args[1]);
+        crawlDate = DateTimeUtil.parseDate(args[2], DateTimeUtil.DATE_FORMAT_NORMAL);
+        String startPath = args[3];
+        baseUrl = args[4];
+        String startUrl =baseUrl+startPath;
 
-        Crawler crawler = new Crawler();
+
+        DayCrawler crawler = new DayCrawler();
+
 
 
         CompletionService<String> objectCompletionService = new ExecutorCompletionService<>(pool);
-        int taskSize = 103;
+        int taskSize = 3;
         for (int i = 1; i <= taskSize; i++) {
-            String url = "http://www.ygdy8.com/html/gndy/china/list_4_" + i + ".html";
+            String url = startUrl + i + ".html";
             HttpClientFactory instance = HttpClientFactory.getInstance();
-            Crawler.GetHtmlTask getHtmlTask = crawler.new GetHtmlTask(null, instance, url);
+            DayCrawler.GetHtmlTask getHtmlTask = crawler.new GetHtmlTask(null, instance, url);
             Thread.sleep(10);
             objectCompletionService.submit(getHtmlTask);
             System.out.println("submit task size = " + i);
@@ -51,7 +63,7 @@ public class Crawler {
             System.out.println("获取第" + i + "页html数据");
             //拿到html数据解析URL
 
-            Crawler.ParseHtmlTask parseHtmlTask = crawler.new ParseHtmlTask(htmlData);
+            DayCrawler.ParseHtmlTask parseHtmlTask = crawler.new ParseHtmlTask(htmlData);
             parseCompletionService.submit(parseHtmlTask);
 
         }
@@ -77,7 +89,7 @@ public class Crawler {
             String detailUrl = baseUrl + url;
             HttpClientFactory instance = HttpClientFactory.getInstance();
             System.out.println("==================start commit detail page===========" + (i++));
-            Crawler.GetHtmlTask getHtmlTask = crawler.new GetHtmlTask(null, instance, detailUrl);
+            DayCrawler.GetHtmlTask getHtmlTask = crawler.new GetHtmlTask(null, instance, detailUrl);
             objectCompletionService.submit(getHtmlTask);
         }
 
@@ -89,7 +101,7 @@ public class Crawler {
                 Future<String> future = objectCompletionService.take();
                 String htmlData = future.get();
                 System.out.println("==================start  parseDetailHtmlTask===================" + (j++));
-                Crawler.ParseDetailHtmlTask parseDetailHtmlTask = crawler.new ParseDetailHtmlTask(htmlData, url);
+                DayCrawler.ParseDetailHtmlTask parseDetailHtmlTask = crawler.new ParseDetailHtmlTask(htmlData, url);
                 parseDetailHtmlTaskService.submit(parseDetailHtmlTask);
 
             } catch (Exception e) {
@@ -147,8 +159,13 @@ public class Crawler {
 
                 Element element = ulinks.get(j);
                 String href = element.attr("href");
-                hrefList.add(href);
 
+                int var = href.lastIndexOf("/");
+                String strPublishDate = href.substring(var - 8, var);
+                Date publishDate = DateUtils.parseDate(strPublishDate, "yyyyMMdd");
+                if(publishDate.compareTo(crawlDate) == 0){
+                    hrefList.add(href);
+                }
             }
             return hrefList;
         }
@@ -188,7 +205,7 @@ public class Crawler {
             Vod vod = new Vod();
             int j = url.lastIndexOf("/");
             String strPublishDate = url.substring(j - 8, j);
-            Date publishDate = DateTimeUtil.parseDate(strPublishDate, "yyyyMMdd");
+            Date publishDate = DateUtils.parseDate(strPublishDate, "yyyyMMdd");
             vod.setPublishDate(publishDate);
             //vodType 0 电影 1 电视
             if (url.contains("/gndy/")) {

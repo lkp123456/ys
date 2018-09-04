@@ -60,13 +60,28 @@ public class VodService {
         }
     }
 
-    public PageInfo<Vod> getVods(int vodType,int countryType,int startPage,int pageSize){
+    public PageInfo<Vod> getVods(Integer vodType,Integer countryType,int startPage,int pageSize){
         PageHelper.startPage(startPage,pageSize);
         VodExample vodExample = new VodExample();
-        vodExample.createCriteria().andVodTypeEqualTo(vodType).andCountryTypeEqualTo(countryType);
+        VodExample.Criteria criteria = vodExample.createCriteria();
+        if(vodType!=null){
+            criteria.andVodTypeEqualTo(vodType);
+        }
+        if(countryType!=null){
+            criteria.andCountryTypeEqualTo(countryType);
+        }
         vodExample.setOrderByClause("publish_date DESC");
         List<Vod> vods = vodMapper.selectByExample(vodExample);
         PageInfo<Vod> vodPageInfo = new PageInfo<>(vods);
         return vodPageInfo;
     }
+
+    public Vod getVodById(Long id){
+        VodExample vodExample = new VodExample();
+        VodExample.Criteria criteria = vodExample.createCriteria();
+        criteria.andIdEqualTo(id);
+        Vod vod = vodMapper.selectByPrimaryKey(id);
+        return vod;
+    }
+
 }
