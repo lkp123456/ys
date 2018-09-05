@@ -14,10 +14,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -37,8 +37,13 @@ public class VodCotroller {
     private SeriesService seriesService;
 
     @ModelAttribute
-    public void header(Model model) {
-        model.addAttribute("categorys", CategoryURI.values());
+    public void header(HttpServletRequest request,Model model) {
+        String requestURI = request.getRequestURI();
+
+        model.addAttribute("requestUri", requestURI);
+        model.addAttribute("categorys", CategoryURI.values()
+
+        );
     }
 
 
@@ -66,13 +71,15 @@ public class VodCotroller {
         if (StringUtils.equals(countryType, "oumei")) {
             innerCountryType = 1;
         }
-        if (StringUtils.equals(countryType, "ruhan")) {
+        if (StringUtils.equals(countryType, "rihan")) {
             innerCountryType = 2;
         }
 
         PageInfo<Vod> vods = vodService.getVods(innerVodType, innerCountryType, startPage,20);
-        model.addAttribute("vods", vods);
-        return "vodList";
+        model.addAttribute("lastVods", vods);
+        model.addAttribute("requestUri", requestUri);
+
+        return "index";
 
     }
 
@@ -80,11 +87,11 @@ public class VodCotroller {
     public String index(Model model) {
         log.debug("index");
         //最新
-        PageInfo<Vod> lastVods = vodService.getVods(0, null, 1, 20);
-        PageInfo<Vod> lastTVs = vodService.getVods(1, null, 1, 20);
+        PageInfo<Vod> lastVods = vodService.getVods(null, null, 1, 20);
+//        PageInfo<Vod> lastTVs = vodService.getVods(1, null, 1, 20);
 
-        PageInfo<Series> series = seriesService.getSeries();
-        model.addAttribute("series",series);
+//        PageInfo<Series> series = seriesService.getSeries();
+//        model.addAttribute("series",series);
 //        PageInfo<Vod> chinaVods = vodService.getVods(0, 0, 1, 10);
 //        PageInfo<Vod> oumeiVods = vodService.getVods(0, 1, 1, 10);
 //        PageInfo<Vod> rihanVods = vodService.getVods(0, 2, 1, 10);
@@ -93,7 +100,7 @@ public class VodCotroller {
 //        PageInfo<Vod> rihanTVs = vodService.getVods(1, 2, 1, 10);
 
         model.addAttribute("lastVods",lastVods);
-        model.addAttribute("lastTVs",lastTVs);
+//        model.addAttribute("lastTVs",lastTVs);
 
 //        model.addAttribute("chinaVods",chinaVods);
 //        model.addAttribute("oumeiVods",oumeiVods);
@@ -105,11 +112,11 @@ public class VodCotroller {
         return "index";
     }
 
-    @RequestMapping("/{vodType}/{id}.html")
-    @ResponseBody
-    public Vod showVod(@PathVariable long id){
+    @RequestMapping("/v/{id}.html")
+    public String showVod(@PathVariable long id,Model model){
         Vod vodById = vodService.getVodById(id);
-        return vodById;
+        model.addAttribute("vod",vodById);
+        return "detail";
     }
 
     @RequestMapping("/showDownloadLinks/{id}.html")

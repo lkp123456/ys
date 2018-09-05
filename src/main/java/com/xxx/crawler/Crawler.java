@@ -3,7 +3,6 @@ package com.xxx.crawler;
 import com.alibaba.fastjson.JSON;
 import com.xxx.entity.Vod;
 import com.xxx.utils.HttpClientFactory;
-import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.*;

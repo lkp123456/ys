@@ -4,13 +4,13 @@ import org.apache.commons.lang3.StringUtils;
 
 public enum CategoryURI {
 
-    LASTVIDEO("最新影片", "/mv/last.html"),
-    RIHANVIDEO("日韩影片", "/mv/rihan.html"),
-    OUMEIVIDEO("欧美影片", "/mv/oumei.html"),
+    LASTVIDEO("最近更新", "/index.html"),
     CHINAVIDEO("国产影片", "/mv/china.html"),
+    OUMEIVIDEO("欧美影片", "/mv/oumei.html"),
+    RIHANVIDEO("日韩影片", "/mv/rihan.html"),
     CHINATV("华语电视", "/tv/china.html"),
-    RIHANTV("日韩电视", "/tv/rihan.html"),
-    OUMEITV("欧美电视", "/tv/oumei.html");
+    OUMEITV("欧美电视", "/tv/oumei.html"),
+    RIHANTV("日韩电视", "/tv/rihan.html");
 
     private String name;
     private String uri;

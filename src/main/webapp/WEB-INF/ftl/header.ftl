@@ -5,34 +5,20 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
     <meta name="description" content="">
     <meta name="author" content="">
-    <link rel="icon" href="../../favicon.ico">
+    <link rel="icon" href="/static/images/favicon.ico">
 
-    <title>Fixed Top Navbar Example for Bootstrap</title>
+    <title>天堂电影院</title>
 
-    <!-- Bootstrap core CSS -->
     <link href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
-    <link href="../../assets/css/ie10-viewport-bug-workaround.css" rel="stylesheet">
 
-    <!-- Custom styles for this template -->
-    <link href="navbar-fixed-top.css" rel="stylesheet">
-    <script src="../../assets/js/ie-emulation-modes-warning.js"></script>
-
-    <link href="css/index.css" rel="stylesheet">
-    <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
-    <!--[if lt IE 9]>
-    <script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
+    <link href="/static/css/index.css" rel="stylesheet">
 
 
-    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-    <!--[if lt IE 9]>
     <script src="https://cdn.bootcss.com/html5shiv/3.7.3/html5shiv.min.js"></script>
     <script src="https://cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
-    <![endif]-->
 </head>
 
 <body>
@@ -49,22 +35,20 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="#">
-                <!-- <img alt="Brand" src=""> -->
-                Project name
+            <a class="navbar-brand" href="/index.html">
+                天堂电影院
             </a>
         </div>
         <div id="navbar" class="navbar-collapse collapse">
             <ul class="nav navbar-nav">
-                <li class="active">
-                    <a href="#">Home</a>
+                <#list categorys as category>
+                    <#if requestUri==category.getUri()>
+                        <li class="active">
+                    <#else><li>
+                    </#if>
+                    <a href="${category.getUri()}">${category.getName()}</a>
                 </li>
-                <li>
-                    <a href="#about">About</a>
-                </li>
-                <li>
-                    <a href="#contact">Contact</a>
-                </li>
+            </#list>
             </ul>
             <ul class="nav navbar-nav navbar-right">
                 <!--
