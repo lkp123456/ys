@@ -5,7 +5,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.PageInfo;
 import com.xxx.base.CategoryURI;
 import com.xxx.entity.DownloadUrl;
-import com.xxx.entity.Series;
 import com.xxx.entity.Vod;
 import com.xxx.service.DownloadUrlService;
 import com.xxx.service.SeriesService;
@@ -28,7 +27,6 @@ import java.util.Map;
 public class VodCotroller {
 
 
-
     @Autowired
     private VodService vodService;
     @Autowired
@@ -37,7 +35,7 @@ public class VodCotroller {
     private SeriesService seriesService;
 
     @ModelAttribute
-    public void header(HttpServletRequest request,Model model) {
+    public void header(HttpServletRequest request, Model model) {
         String requestURI = request.getRequestURI();
 
         model.addAttribute("requestUri", requestURI);
@@ -48,8 +46,8 @@ public class VodCotroller {
 
 
     @RequestMapping("/{vodType}/{countryType}.html")
-    public String showVod(@PathVariable String vodType, @PathVariable String countryType,
-                          @RequestParam(name = "startPage", required = false,defaultValue = "1") int startPage, Model model) {
+    public String showVodList(@PathVariable String vodType, @PathVariable String countryType,
+                              @RequestParam(name = "startPage", required = false, defaultValue = "1") int startPage, Model model) {
         String requestUri = "/" + vodType + "/" + countryType + ".html";
         if (!CategoryURI.contains(requestUri)) {
             return "404";
@@ -75,7 +73,7 @@ public class VodCotroller {
             innerCountryType = 2;
         }
 
-        PageInfo<Vod> vods = vodService.getVods(innerVodType, innerCountryType, startPage,20);
+        PageInfo<Vod> vods = vodService.getVods(innerVodType, innerCountryType, startPage, 20);
         model.addAttribute("lastVods", vods);
         model.addAttribute("requestUri", requestUri);
 
@@ -83,49 +81,38 @@ public class VodCotroller {
 
     }
 
+    @RequestMapping(value = "/search.html", method = RequestMethod.POST)
+    public String search(@RequestParam(name = "vodName", required = true) String vodName, Model model) {
+        List<Vod> vodsByName = vodService.getVodsByName(vodName);
+        PageInfo<Vod> lastVods = new PageInfo<>(vodsByName);
+        model.addAttribute("lastVods", lastVods);
+        return "index";
+
+    }
+
+
     @RequestMapping("/index.html")
     public String index(Model model) {
         log.debug("index");
         //最新
         PageInfo<Vod> lastVods = vodService.getVods(null, null, 1, 20);
-//        PageInfo<Vod> lastTVs = vodService.getVods(1, null, 1, 20);
-
-//        PageInfo<Series> series = seriesService.getSeries();
-//        model.addAttribute("series",series);
-//        PageInfo<Vod> chinaVods = vodService.getVods(0, 0, 1, 10);
-//        PageInfo<Vod> oumeiVods = vodService.getVods(0, 1, 1, 10);
-//        PageInfo<Vod> rihanVods = vodService.getVods(0, 2, 1, 10);
-//        PageInfo<Vod> chinaTVs = vodService.getVods(1, 0, 1, 10);
-//        PageInfo<Vod> oumeiTVs = vodService.getVods(1, 1, 1, 10);
-//        PageInfo<Vod> rihanTVs = vodService.getVods(1, 2, 1, 10);
-
-        model.addAttribute("lastVods",lastVods);
-//        model.addAttribute("lastTVs",lastTVs);
-
-//        model.addAttribute("chinaVods",chinaVods);
-//        model.addAttribute("oumeiVods",oumeiVods);
-//        model.addAttribute("rihanVods",rihanVods);
-//        model.addAttribute("chinaTVs",chinaTVs);
-//        model.addAttribute("oumeiTVs",oumeiTVs);
-//        model.addAttribute("rihanTVs",rihanTVs);
-
+        model.addAttribute("lastVods", lastVods);
         return "index";
     }
 
     @RequestMapping("/v/{id}.html")
-    public String showVod(@PathVariable long id,Model model){
+    public String showVod(@PathVariable long id, Model model) {
         Vod vodById = vodService.getVodById(id);
-        model.addAttribute("vod",vodById);
+        model.addAttribute("vod", vodById);
         return "detail";
     }
 
     @RequestMapping("/showDownloadLinks/{id}.html")
-    @ResponseBody
-    public List<DownloadUrl> showDownloadLinks(@PathVariable(name = "id",required = true) long vodId){
+    public String showDownloadLinks(@PathVariable(name = "id", required = true) long vodId,Model model) {
         List<DownloadUrl> downloadUrls = downloadUrlService.getDownloadUrls(vodId);
-        return downloadUrls;
+        model.addAttribute("downloadUrls",downloadUrls);
+        return "downloadurl";
     }
-
 
 
     @RequestMapping(value = "/addVod", method = RequestMethod.POST)

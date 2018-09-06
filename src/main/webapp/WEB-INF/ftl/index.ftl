@@ -7,10 +7,10 @@
             <div class="col-xs-6 col-sm-4 col-md-3">
                 <a href="/v/${vod.id?string["0"]}.html">
                     <div class="thumbnail">
-                        <img src="${vod.postUrl}" class="img-thumbnail" alt="...">
+                        <img src="${vod.postUrl!}" class="img-thumbnail" alt="...">
                         <div class="caption">
-                            <h4>${vod.title}</h4>
-                            <h5>更新日期：${vod.publishDate?string('yyyy-MM-dd')}</h5>
+                            <h4>${vod.title!}</h4>
+                            <h5>更新日期：${vod.publishDate?string('yyyy-MM-dd')!}</h5>
                         </div>
                     </div>
                 </a>

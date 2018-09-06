@@ -84,4 +84,12 @@ public class VodService {
         return vod;
     }
 
+    public List<Vod> getVodsByName(String name){
+        VodExample vodExample = new VodExample();
+        VodExample.Criteria criteria = vodExample.createCriteria();
+        criteria.andNameEqualTo(name);
+        List<Vod> vods = vodMapper.selectByExample(vodExample);
+        return vods;
+    }
+
 }
