@@ -4,19 +4,23 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.PageInfo;
 import com.xxx.base.CategoryURI;
+import com.xxx.base.ResponseResult;
 import com.xxx.entity.DownloadUrl;
 import com.xxx.entity.Vod;
 import com.xxx.service.DownloadUrlService;
 import com.xxx.service.SeriesService;
 import com.xxx.service.VodService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.*;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -115,9 +119,39 @@ public class VodCotroller {
     }
 
 
+    @RequestMapping(value = "/showAddVod.html")
+    public String showAddVod(){
+        return "addvod";
+    }
+    @RequestMapping(value = "/saveVod", method = RequestMethod.POST)
+    @ResponseBody
+    public ResponseResult saveVodByHuman(@RequestParam String title, @RequestParam String name, @RequestParam String content,
+                                         @RequestParam MultipartFile postFile, @RequestParam MultipartFile screenshotFile) throws IOException {
+
+        byte[] postFileBytes = postFile.getBytes();
+        byte[] screenshotFileBytes = screenshotFile.getBytes();
+
+        String postFileName = postFile.getOriginalFilename();
+        String screenshotFileName = screenshotFile.getOriginalFilename();
+
+        FileOutputStream postFileOut = new FileOutputStream("/"+postFileName);
+        IOUtils.write(postFileBytes,postFileOut);
+        postFileOut.close();
+        FileOutputStream screenshotOut = new FileOutputStream("/"+screenshotFileName);
+        IOUtils.write(screenshotFileBytes,screenshotOut);
+        screenshotOut.close();
+
+//        vodService.addVod(name,title,content);
+
+        return ResponseResult.OK;
+    }
+
+
+
+
     @RequestMapping(value = "/addVod", method = RequestMethod.POST)
     @ResponseBody
-    public String addVod(@RequestBody Map map) {
+    public String addVodByCrawler(@RequestBody Map map) {
         System.out.println(map);
         JSONObject vod = (JSONObject) map.get("vod");
         String key = (String) map.get("key");
