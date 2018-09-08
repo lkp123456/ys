@@ -43,9 +43,7 @@ public class VodCotroller {
         String requestURI = request.getRequestURI();
 
         model.addAttribute("requestUri", requestURI);
-        model.addAttribute("categorys", CategoryURI.values()
-
-        );
+        model.addAttribute("categorys", CategoryURI.values());
     }
 
 
@@ -91,7 +89,6 @@ public class VodCotroller {
         PageInfo<Vod> lastVods = new PageInfo<>(vodsByName);
         model.addAttribute("lastVods", lastVods);
         return "index";
-
     }
 
 
@@ -126,20 +123,21 @@ public class VodCotroller {
     @RequestMapping(value = "/saveVod", method = RequestMethod.POST)
     @ResponseBody
     public ResponseResult saveVodByHuman(@RequestParam String title, @RequestParam String name, @RequestParam String content,
-                                         @RequestParam MultipartFile postFile, @RequestParam MultipartFile screenshotFile) throws IOException {
+                                         //@RequestParam MultipartFile postFile, @RequestParam MultipartFile screenshotFile){
+                                         @RequestParam String postUrl, @RequestParam String screenUrl){
+//        byte[] postFileBytes = postFile.getBytes();
+//        byte[] screenshotFileBytes = screenshotFile.getBytes();
 
-        byte[] postFileBytes = postFile.getBytes();
-        byte[] screenshotFileBytes = screenshotFile.getBytes();
+//        String postFileName = postFile.getOriginalFilename();
+//        String screenshotFileName = screenshotFile.getOriginalFilename();
+//
+//        FileOutputStream postFileOut = new FileOutputStream("/"+postFileName);
+//        IOUtils.write(postFileBytes,postFileOut);
+//        postFileOut.close();
+//        FileOutputStream screenshotOut = new FileOutputStream("/"+screenshotFileName);
+//        IOUtils.write(screenshotFileBytes,screenshotOut);
+//        screenshotOut.close();
 
-        String postFileName = postFile.getOriginalFilename();
-        String screenshotFileName = screenshotFile.getOriginalFilename();
-
-        FileOutputStream postFileOut = new FileOutputStream("/"+postFileName);
-        IOUtils.write(postFileBytes,postFileOut);
-        postFileOut.close();
-        FileOutputStream screenshotOut = new FileOutputStream("/"+screenshotFileName);
-        IOUtils.write(screenshotFileBytes,screenshotOut);
-        screenshotOut.close();
 
 //        vodService.addVod(name,title,content);
 

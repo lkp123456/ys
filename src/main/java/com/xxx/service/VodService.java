@@ -60,6 +60,34 @@ public class VodService {
         }
     }
 
+    public void addVod2(String name, String title, String post_url, String content, String screenshot_url, int vod_type,
+                       int country_type, Date publishDate, String[] downloadUrls, String[] magnetUrls, String[] sourceName) {
+        Vod vod = new Vod();
+        vod.setContent(content);
+        vod.setCountryType(country_type);
+        vod.setName(name);
+        vod.setTitle(title);
+        vod.setPostUrl(post_url);
+        vod.setScreenshotUrl(screenshot_url);
+        vod.setPublishDate(publishDate);
+        vod.setVodType(vod_type);
+
+        vodMapper.insertSelective(vod);
+
+        for (int i = 0; i < sourceName.length; i++) {
+            DownloadUrl downloadUrlEntity = new DownloadUrl();
+            downloadUrlEntity.setSourceName(sourceName[i]);
+            if (i < downloadUrls.length) {
+                downloadUrlEntity.setDownloadUrl(downloadUrls[i]);
+            }
+            if (i < magnetUrls.length) {
+                downloadUrlEntity.setMagnetUrl(magnetUrls[i]);
+            }
+            downloadUrlEntity.setVodId(vod.getId());
+            downloadUrlMapper.insertSelective(downloadUrlEntity);
+        }
+    }
+
     public PageInfo<Vod> getVods(Integer vodType,Integer countryType,int startPage,int pageSize){
         PageHelper.startPage(startPage,pageSize);
         VodExample vodExample = new VodExample();

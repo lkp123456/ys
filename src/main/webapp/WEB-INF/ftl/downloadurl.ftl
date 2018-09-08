@@ -16,7 +16,7 @@
             <#list downloadUrls as url>
             <tr>
                 <td>${url.sourceName!}</td>
-                <td>${url.downloadUrl!}</td>
+                <td><a href="${url.downloadUrl!}">鼠标右键复制该下载链接</a></td>
             </tr>
             </#list>
             </tbody>
@@ -40,7 +40,7 @@
             <#list downloadUrls as url>
             <tr>
                 <td>${url.sourceName!}</td>
-                <td>${url.magnetUrl!}</td>
+                <td><a href="${url.magnetUrl!}">鼠标右键复制该下载链接</a></td>
             </tr>
             </#list>
             </tbody>
