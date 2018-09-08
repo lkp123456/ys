@@ -93,10 +93,10 @@ public class VodCotroller {
 
 
     @RequestMapping("/index.html")
-    public String index(Model model) {
+    public String index(Model model,@RequestParam(name = "startPage", required = false, defaultValue = "1") int startPage) {
         log.debug("index");
         //最新
-        PageInfo<Vod> lastVods = vodService.getVods(null, null, 1, 20);
+        PageInfo<Vod> lastVods = vodService.getVods(null, null, startPage, 20);
         model.addAttribute("lastVods", lastVods);
         return "index";
     }

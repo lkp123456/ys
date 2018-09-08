@@ -11,7 +11,7 @@
 			</div>
 
 		</div>
-        <a href="/showDownloadLinks/${vod.id}.html"><button type="button" class="btn btn-primary btn-lg btn-block">查看下载地址</button></a>
+        <a href="/showDownloadLinks/${vod.id?string["0"]}.html"><button type="button" class="btn btn-primary btn-lg btn-block">查看下载地址</button></a>
 	</div>
 	<!-- /container -->
 <#include "/footer.ftl">

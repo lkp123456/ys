@@ -29,8 +29,8 @@ public class Crawler {
 
 
         //获取列表页文档
-        CompletionService<Document> objectCompletionService = new ExecutorCompletionService<>(pool);
-        int taskSize = 33;
+        CompletionService<Map> objectCompletionService = new ExecutorCompletionService<>(pool);
+        int taskSize = 34;
         for (int i = 1; i <= taskSize; i++) {
             String url = "http://www.ygdy8.net/html/gndy/rihan/list_6_"+i+".html";
             HttpClientFactory instance = HttpClientFactory.getInstance();
@@ -42,13 +42,13 @@ public class Crawler {
         //解析列表页文档url
         CompletionService<List<String>> parseCompletionService = new ExecutorCompletionService<>(pool);
         for (int i = 1; i <= taskSize; i++) {
-            Future<Document> future = objectCompletionService.take();
-            Document htmlData = future.get();
+            Future<Map> future = objectCompletionService.take();
+            Map map = future.get();
 
             System.out.println("获取第" + i + "页html数据");
             //拿到html数据解析URL
-            Thread.sleep(1000);
-            Crawler.ParseHtmlTask parseHtmlTask = new Crawler().new ParseHtmlTask(htmlData);
+//            Thread.sleep(1000);
+            Crawler.ParseHtmlTask parseHtmlTask = new Crawler().new ParseHtmlTask((Document)map.get("document"));
             parseCompletionService.submit(parseHtmlTask);
 
         }
@@ -84,10 +84,12 @@ public class Crawler {
         int j = 0;
         for (String url : urls) {
             try {
-                Future<Document> future = objectCompletionService.take();
-                Document htmlData = future.get();
+                Future<Map> future = objectCompletionService.take();
+                Map map = future.get();
+                Document document = (Document)map.get("document");
+                String url1 = (String) map.get("url");
                 System.out.println("==================start  parseDetailHtmlTask===================" + (j++));
-                Crawler.ParseDetailHtmlTask parseDetailHtmlTask = new Crawler().new ParseDetailHtmlTask(htmlData, url);
+                Crawler.ParseDetailHtmlTask parseDetailHtmlTask = new Crawler().new ParseDetailHtmlTask(document, url1);
                 parseDetailHtmlTaskService.submit(parseDetailHtmlTask);
 
             } catch (Exception e) {
@@ -154,7 +156,7 @@ public class Crawler {
         }
     }
 
-    private class GetHtmlTask implements Callable<Document> {
+    private class GetHtmlTask implements Callable<Map> {
         private Map headers;
         private HttpClientFactory instance;
         private String url;
@@ -166,11 +168,14 @@ public class Crawler {
         }
 
         @Override
-        public Document call() throws Exception {
+        public Map call() throws Exception {
             Document document = Jsoup.connect(url).userAgent("Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36")
                     .timeout(10000)
                     .get();
-            return document;
+            HashMap<Object, Object> objectObjectHashMap = new HashMap<>();
+            objectObjectHashMap.put("document",document);
+            objectObjectHashMap.put("url",url);
+            return objectObjectHashMap;
         }
     }
 
@@ -249,20 +254,32 @@ public class Crawler {
             }
 
             Elements ps = zoom.getElementsByAttributeValue("style", "FONT-SIZE: 12px");
-            StringBuilder stringBuilder = new StringBuilder();
+            StringBuffer stringBuffer = new StringBuffer();
             for (Element p : ps) {
-                String ownText = p.text();
+                Elements p1 = p.getElementsByTag("p");
 
-                String[] split = ownText.split("◎");
+                for (Element element : p1) {
+                    String ownText = element.text();
 
-                for (int i = 1; i < split.length; i++) {
-                    if (split[i].contains("主　　演")) {
-                        split[i] = split[i].replace(" 　　　　　　", "/");
+                    String[] split = ownText.split("◎");
+
+                    for (int i = 1; i < split.length; i++) {
+//                        if (split[i].contains("主　　演")) {
+//                            split[i] = split[i].replace(" 　　　　　　", "/");
+//                        }
+                        stringBuffer.append("<br>◎" + split[i]);
                     }
-                    stringBuilder.append("<br>◎" + split[i]);
                 }
             }
-            vod.setContent(stringBuilder.toString());
+            String s = stringBuffer.toString();
+            int i1 = s.indexOf("【");
+            String substring="";
+            if(i1>1){
+                 substring = s.substring(0, i1);
+            }else {
+                substring=s;
+            }
+            vod.setContent(substring);
 
             Elements downloadUrls = zoom.getElementsByTag("a");
             System.out.println("===============================");
