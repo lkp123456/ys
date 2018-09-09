@@ -2,7 +2,6 @@ package com.xxx.crawler;
 
 import com.alibaba.fastjson.JSON;
 import com.xxx.entity.Vod;
-import com.xxx.utils.DateTimeUtil;
 import com.xxx.utils.HttpClientFactory;
 import org.apache.commons.lang3.time.DateUtils;
 import org.jsoup.Jsoup;
@@ -10,7 +9,6 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.io.ByteArrayInputStream;
 import java.text.ParseException;
 import java.util.*;
 import java.util.concurrent.*;
@@ -23,61 +21,43 @@ import java.util.concurrent.*;
  */
 public class DayCrawler {
 
-    private static ThreadPoolExecutor pool = new ThreadPoolExecutor(5, 20, 200, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
+    private static ThreadPoolExecutor pool = new ThreadPoolExecutor(50, 800, 200, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
 
-    private static String baseUrl = "http://www.ygdy8.com";
-    static Date crawlDate = null ;
+    private static String baseUrl = "http://www.ygdy8.net";
 
     public static void main(String[] args) throws InterruptedException, ExecutionException, ParseException {
-        //main参数指定0:vodType(0:mv 1:tv) 1:countryType(0:china 1:oumei 2:rihan) 2:日期(格式:yyyy-Mm-dd)
-        //           3:baseUrl 4:startPath 5:pageSize
-        int vodType= Integer.parseInt(args[0]);
-        int country= Integer.parseInt(args[1]);
-        crawlDate = DateTimeUtil.parseDate(args[2], DateTimeUtil.DATE_FORMAT_NORMAL);
-        String startPath = args[3];
-        baseUrl = args[4];
-        String startUrl =baseUrl+startPath;
 
 
-        DayCrawler crawler = new DayCrawler();
+        CompletionService<Map> objectCompletionService = new ExecutorCompletionService<>(pool);
+//        int taskSize = 34;
+//        for (int i = 1; i <= taskSize; i++) {
+//            String url = "http://www.ygdy8.net/html/gndy/rihan/list_6_"+i+".html";
+//            HttpClientFactory instance = HttpClientFactory.getInstance();
+//            DayCrawler.GetHtmlTask getHtmlTask = new DayCrawler().new GetHtmlTask(null, instance, url);
+//            Thread.sleep(10);
+//            objectCompletionService.submit(getHtmlTask);
+//            System.out.println("submit task size = " + i);
+//        }
+        //获取首页文档
+        HttpClientFactory instance = HttpClientFactory.getInstance();
+        DayCrawler.GetHtmlTask getHtmlTask = new DayCrawler().new GetHtmlTask(null, instance, baseUrl);
+        objectCompletionService.submit(getHtmlTask);
 
 
-
-        CompletionService<String> objectCompletionService = new ExecutorCompletionService<>(pool);
-        int taskSize = 3;
-        for (int i = 1; i <= taskSize; i++) {
-            String url = startUrl + i + ".html";
-            HttpClientFactory instance = HttpClientFactory.getInstance();
-            DayCrawler.GetHtmlTask getHtmlTask = crawler.new GetHtmlTask(null, instance, url);
-            Thread.sleep(10);
-            objectCompletionService.submit(getHtmlTask);
-            System.out.println("submit task size = " + i);
-        }
-
+        //解析首页文档url
         CompletionService<List<String>> parseCompletionService = new ExecutorCompletionService<>(pool);
-        for (int i = 1; i <= taskSize; i++) {
-            Future<String> future = objectCompletionService.take();
-            String htmlData = future.get();
+        Future<Map> future = objectCompletionService.take();
+        Map map = future.get();
+        //拿到html数据解析URL
+        DayCrawler.ParseHtmlTask parseHtmlTask = new DayCrawler().new ParseHtmlTask((Document) map.get("document"));
+        parseCompletionService.submit(parseHtmlTask);
 
-            System.out.println("获取第" + i + "页html数据");
-            //拿到html数据解析URL
-
-            DayCrawler.ParseHtmlTask parseHtmlTask = crawler.new ParseHtmlTask(htmlData);
-            parseCompletionService.submit(parseHtmlTask);
-
+        Future<List<String>> take1 = parseCompletionService.take();
+        List<String> urls =null;
+        if(take1.isDone()){
+            urls = take1.get();
         }
 
-        LinkedHashSet<String> urls = new LinkedHashSet<>();
-
-        for (int i = 0; i < taskSize; i++) {
-            Future<List<String>> future = parseCompletionService.take();
-            List<String> taskUrls = future.get();
-            System.out.println("=======第" + i + "次任务取出详情页url数：" + taskUrls.size());
-            for (int j = 0; j < taskUrls.size(); j++) {
-                System.out.println("url：" + taskUrls.get(j));
-            }
-            urls.addAll(taskUrls);
-        }
         System.out.println("详情页数据量：" + urls.size());
 
         System.out.println("===================================================");
@@ -86,10 +66,10 @@ public class DayCrawler {
         int i = 0;
         for (String url : urls) {
             String detailUrl = baseUrl + url;
-            HttpClientFactory instance = HttpClientFactory.getInstance();
+            System.out.println("@@@@@@@@@@@@@" + detailUrl);
             System.out.println("==================start commit detail page===========" + (i++));
-            DayCrawler.GetHtmlTask getHtmlTask = crawler.new GetHtmlTask(null, instance, detailUrl);
-            objectCompletionService.submit(getHtmlTask);
+            DayCrawler.GetHtmlTask getDetailHtmlTask = new DayCrawler().new GetHtmlTask(null, instance, detailUrl);
+            objectCompletionService.submit(getDetailHtmlTask);
         }
 
         System.out.println("==================start parse detail page=================================");
@@ -97,10 +77,12 @@ public class DayCrawler {
         int j = 0;
         for (String url : urls) {
             try {
-                Future<String> future = objectCompletionService.take();
-                String htmlData = future.get();
+                Future<Map> detailFuture = objectCompletionService.take();
+                Map detailFutureMap = detailFuture.get();
+                Document document = (Document) detailFutureMap.get("document");
+                String url1 = (String) detailFutureMap.get("url");
                 System.out.println("==================start  parseDetailHtmlTask===================" + (j++));
-                DayCrawler.ParseDetailHtmlTask parseDetailHtmlTask = crawler.new ParseDetailHtmlTask(htmlData, url);
+                DayCrawler.ParseDetailHtmlTask parseDetailHtmlTask = new DayCrawler().new ParseDetailHtmlTask(document, url1);
                 parseDetailHtmlTaskService.submit(parseDetailHtmlTask);
 
             } catch (Exception e) {
@@ -113,13 +95,16 @@ public class DayCrawler {
         for (String url : urls) {
             try {
                 Future<Map> take = parseDetailHtmlTaskService.take();
-                Map map = take.get();
 
-                HttpClientFactory instance = HttpClientFactory.getInstance();
-                map.put("key", "qewqwasdasdsfsqwaawxcfgcegfcd");
-                String s = JSON.toJSONString(map);
-                String s1 = instance.postData("http://localhost:8080/addVod", s);
-                System.out.println(s1);
+                boolean done = take.isDone();
+                if (done) {
+                    Map detailMap = take.get();
+                    map.put("key", "qewqwasdasdsfsqwaawxcfgcegfcd");
+                    String s = JSON.toJSONString(detailMap);
+                    String s1 = instance.postData("http://localhost:8080/addVod", s);
+                    System.out.println(s1);
+                }
+
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -138,39 +123,32 @@ public class DayCrawler {
     private class ParseHtmlTask implements Callable<List<String>> {
 
         List hrefList = new LinkedList<String>();
-        private String htmlData;
+        private Document htmlData;
 
-        public ParseHtmlTask(String htmlData) {
+        public ParseHtmlTask(Document htmlData) {
             this.htmlData = htmlData;
         }
 
         @Override
         public List<String> call() throws Exception {
-            System.out.println(htmlData);
-            ByteArrayInputStream tInputStringStream = new ByteArrayInputStream(htmlData.getBytes("GB2312"));
-            Document document = Jsoup.parse(tInputStringStream, "UTF-8", baseUrl);
-            Elements ulinks = document.getElementsByClass("ulink");
-
-            for (int j = 0; j < ulinks.size(); j++) {
-                if (j % 2 == 0) {
-                    continue;
-                }
-
-                Element element = ulinks.get(j);
-                String href = element.attr("href");
-
-                int var = href.lastIndexOf("/");
-                String strPublishDate = href.substring(var - 8, var);
-                Date publishDate = DateUtils.parseDate(strPublishDate, "yyyyMMdd");
-                if(publishDate.compareTo(crawlDate) == 0){
-                    hrefList.add(href);
+            Elements as = null;
+            Elements co_content2 = htmlData.getElementsByClass("co_content2");
+            for (Element co_content : co_content2) {
+                as = co_content.getElementsByTag("a");
+            }
+            for (Element a : as) {
+                String href1 = a.attr("href");
+                int j = href1.lastIndexOf("/");
+                String strPublishDate = href1.substring(j - 8, j);
+                if (strPublishDate.compareTo("20180905") > 0) {
+                    hrefList.add(href1);
                 }
             }
             return hrefList;
         }
     }
 
-    private class GetHtmlTask implements Callable<String> {
+    private class GetHtmlTask implements Callable<Map> {
         private Map headers;
         private HttpClientFactory instance;
         private String url;
@@ -182,18 +160,24 @@ public class DayCrawler {
         }
 
         @Override
-        public String call() throws Exception {
-            return instance.get(url, headers);
+        public Map call() throws Exception {
+            Document document = Jsoup.connect(url).userAgent("Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36")
+                    .timeout(10000)
+                    .get();
+            HashMap<Object, Object> objectObjectHashMap = new HashMap<>();
+            objectObjectHashMap.put("document", document);
+            objectObjectHashMap.put("url", url);
+            return objectObjectHashMap;
         }
     }
 
 
     private class ParseDetailHtmlTask implements Callable<Map> {
 
-        private String htmlData;
+        private Document htmlData;
         private String url;
 
-        public ParseDetailHtmlTask(String htmlData, String url) {
+        public ParseDetailHtmlTask(Document htmlData, String url) {
             this.htmlData = htmlData;
             this.url = url;
         }
@@ -214,37 +198,41 @@ public class DayCrawler {
             }
             //countryType 0国内 1欧美 2日韩
 
-            if (url.contains("/jddy/")) {
-                vod.setCountryType(0);
-            } else if (url.contains("/oumei/")) {
-                vod.setCountryType(1);
-            } else if (url.contains("gndy/rihan/")) {
-                vod.setCountryType(2);
-            } else if (url.contains("/hytv/")) {
-                vod.setCountryType(0);
-            } else if (url.contains("/oumeitv/")) {
-                vod.setCountryType(1);
-            } else if (url.contains("/rihantv/")) {
-                vod.setCountryType(2);
-            }else {
-                vod.setCountryType(0);
-            }
+//            if (url.contains("/jddy/")) {
+//                vod.setCountryType(0);
+//            } else if (url.contains("/oumei/")) {
+//                vod.setCountryType(1);
+//            } else if (url.contains("gndy/rihan/")) {
+//                vod.setCountryType(2);
+//            } else if (url.contains("/hytv/")) {
+//                vod.setCountryType(0);
+//            } else if (url.contains("/oumeitv/")) {
+//                vod.setCountryType(1);
+//            } else if (url.contains("/rihantv/")) {
+//                vod.setCountryType(2);
+//            }else {
+//                vod.setCountryType(0);
+//            }
 
+            vod.setCountryType(2);
 
-            Document document = Jsoup.parse(htmlData);
-            Elements h1 = document.getElementsByTag("h1");
+            Elements h1 = htmlData.getElementsByTag("h1");
             for (Element element : h1) {
                 Elements font = element.getElementsByTag("font");
                 String title = font.text();
                 vod.setTitle(title);//title
+                int m = title.indexOf("《");
+                int n = title.indexOf("》");
+
                 System.out.println(title);
-                int i = title.indexOf("《");
-                int i1 = title.indexOf("》");
-                String name = title.substring(i + 1, i1);
+                System.out.println(m + "   " + n);
+                String name = title.substring(m + 1, n);
+                System.out.println(name);
+
                 vod.setName(name);
             }
 
-            Element zoom = document.getElementById("Zoom");//只有1个
+            Element zoom = htmlData.getElementById("Zoom");//只有1个
             Elements imgs = zoom.getElementsByTag("img");//两个
             for (int i = 0; i < imgs.size(); i++) {
                 Element img = imgs.get(i);
@@ -257,21 +245,37 @@ public class DayCrawler {
                 }
             }
 
-            Elements ps = zoom.getElementsByTag("p");
-            StringBuilder stringBuilder = new StringBuilder();
+            Elements ps = zoom.getElementsByAttributeValue("style", "FONT-SIZE: 12px");
+            StringBuffer stringBuffer = new StringBuffer();
             for (Element p : ps) {
-                String ownText = p.ownText();
+                Elements p1 = p.getElementsByTag("p");
 
-                String[] split = ownText.split("◎");
+                for (Element element : p1) {
+                    String ownText = element.text();
 
-                for (int i = 1; i < split.length; i++) {
-                    if (split[i].contains("主　　演")) {
-                        split[i] = split[i].replace(" 　　　　　　", "/");
+                    String[] split = ownText.split("◎");
+
+                    for (int i = 1; i < split.length; i++) {
+                        if (split[i].contains("产　　地")&&split[i].contains("中国")) {
+                            vod.setCountryType(0);
+                        } else if (split[i].contains("产　　地")&&(split[i].contains("日本")||split[i].contains("韩国"))){
+                            vod.setCountryType(2);
+                        }else{
+                            vod.setCountryType(1);
+                        }
+                        stringBuffer.append("<br>◎" + split[i]);
                     }
-                    stringBuilder.append("<br>◎" + split[i]);
                 }
             }
-            vod.setContent(stringBuilder.toString());
+            String s = stringBuffer.toString();
+            int i1 = s.indexOf("【");
+            String substring = "";
+            if (i1 > 1) {
+                substring = s.substring(0, i1);
+            } else {
+                substring = s;
+            }
+            vod.setContent(substring);
 
             Elements downloadUrls = zoom.getElementsByTag("a");
             System.out.println("===============================");

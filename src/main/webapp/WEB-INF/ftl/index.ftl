@@ -7,7 +7,7 @@
             <div class="col-xs-6 col-sm-4 col-md-3">
                 <a href="/v/${vod.id?string["0"]}.html">
                     <div class="thumbnail">
-                        <img src="${vod.postUrl!}" class="img-thumbnail" alt="...">
+                        <img src="${vod.postUrl!}" class="img-thumbnail" onerror="this.src='https://extraimage.net/images/2018/09/09/3a56ab0b4fb273d8bf90f40f87dbedac.gif'">
                         <div class="caption">
                             <h4>${vod.title!}</h4>
                             <h5>更新日期：${vod.publishDate?string('yyyy-MM-dd')!}</h5>
