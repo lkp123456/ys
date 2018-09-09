@@ -53,8 +53,8 @@ public class DayCrawler {
         parseCompletionService.submit(parseHtmlTask);
 
         Future<List<String>> take1 = parseCompletionService.take();
-        List<String> urls =null;
-        if(take1.isDone()){
+        List<String> urls = null;
+        if (take1.isDone()) {
             urls = take1.get();
         }
 
@@ -99,9 +99,10 @@ public class DayCrawler {
                 boolean done = take.isDone();
                 if (done) {
                     Map detailMap = take.get();
-                    map.put("key", "qewqwasdasdsfsqwaawxcfgcegfcd");
+                    detailMap.put("key", "qewqwasdasdsfsqwaawxcfgcegfcd");
                     String s = JSON.toJSONString(detailMap);
-                    String s1 = instance.postData("http://localhost:8080/addVod", s);
+                    String s1 = instance.postData("http://cinemaparadise.club/addVod", s);
+//                    String s1 = instance.postData("http://localhost:8080/addVod", s);
                     System.out.println(s1);
                 }
 
@@ -131,16 +132,20 @@ public class DayCrawler {
 
         @Override
         public List<String> call() throws Exception {
-            Elements as = null;
+            Elements as = new Elements();
             Elements co_content2 = htmlData.getElementsByClass("co_content2");
             for (Element co_content : co_content2) {
-                as = co_content.getElementsByTag("a");
+                Elements innerAs = co_content.getElementsByTag("a");
+                as.addAll(innerAs);
             }
             for (Element a : as) {
                 String href1 = a.attr("href");
                 int j = href1.lastIndexOf("/");
+                if (j <= 8) {
+                    continue;
+                }
                 String strPublishDate = href1.substring(j - 8, j);
-                if (strPublishDate.compareTo("20180905") > 0) {
+                if (strPublishDate.compareTo("20180905") >= 0) {
                     hrefList.add(href1);
                 }
             }
@@ -214,7 +219,6 @@ public class DayCrawler {
 //                vod.setCountryType(0);
 //            }
 
-            vod.setCountryType(2);
 
             Elements h1 = htmlData.getElementsByTag("h1");
             for (Element element : h1) {
@@ -256,11 +260,11 @@ public class DayCrawler {
                     String[] split = ownText.split("◎");
 
                     for (int i = 1; i < split.length; i++) {
-                        if (split[i].contains("产　　地")&&split[i].contains("中国")) {
+                        if (split[i].contains("产　　地") && split[i].contains("中国")) {
                             vod.setCountryType(0);
-                        } else if (split[i].contains("产　　地")&&(split[i].contains("日本")||split[i].contains("韩国"))){
+                        } else if (split[i].contains("产　　地") && (split[i].contains("日本") || split[i].contains("韩国"))) {
                             vod.setCountryType(2);
-                        }else{
+                        } else if(split[i].contains("产　　地")){
                             vod.setCountryType(1);
                         }
                         stringBuffer.append("<br>◎" + split[i]);
@@ -284,6 +288,9 @@ public class DayCrawler {
             for (int i = 0; i < downloadUrls.size(); i++) {
                 Element element = downloadUrls.get(i);
                 String href = element.attr("href");
+                if(href.equals("")||href.startsWith("http://www.ygdy8.com/")){
+                    continue;
+                }
                 urls.add(href);
             }
             HashMap<Object, Object> objectObjectHashMap = new HashMap<>();
