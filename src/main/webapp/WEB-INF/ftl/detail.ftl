@@ -7,7 +7,7 @@
                 <img src="${vod.postUrl!}" class="img-responsive" onerror="this.src='https://extraimage.net/images/2018/09/09/3a56ab0b4fb273d8bf90f40f87dbedac.gif'">
                 <h2>${vod.name!}</h2>
                 <p>${vod.content!}</p>
-				<img src="${vod.screenshotUrl!}" class="img-responsive" onerror="this.src='https://extraimage.net/images/2018/09/09/11392693c0d3a7418acd536856c2522d.gif'">
+				<img src="${vod.screenshotUrl!}" class="img-responsive" onerror="this.src='https://extraimage.net/images/2018/09/09/b157e286995ebc9796175082815786ef.gif'">
 			</div>
 
 		</div>
