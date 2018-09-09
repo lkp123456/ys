@@ -100,6 +100,14 @@ public class VodCotroller {
         model.addAttribute("lastVods", lastVods);
         return "index";
     }
+    @RequestMapping("/")
+    public String index1(Model model,@RequestParam(name = "startPage", required = false, defaultValue = "1") int startPage) {
+        log.debug("index");
+        //最新
+        PageInfo<Vod> lastVods = vodService.getVods(null, null, startPage, 20);
+        model.addAttribute("lastVods", lastVods);
+        return "index";
+    }
 
     @RequestMapping("/v/{id}.html")
     public String showVod(@PathVariable long id, Model model) {
