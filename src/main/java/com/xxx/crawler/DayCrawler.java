@@ -2,6 +2,7 @@ package com.xxx.crawler;
 
 import com.alibaba.fastjson.JSON;
 import com.xxx.entity.Vod;
+import com.xxx.utils.DateTimeUtil;
 import com.xxx.utils.HttpClientFactory;
 import org.apache.commons.lang3.time.DateUtils;
 import org.jsoup.Jsoup;
@@ -145,7 +146,9 @@ public class DayCrawler {
                     continue;
                 }
                 String strPublishDate = href1.substring(j - 8, j);
-                if (strPublishDate.compareTo("20180905") >= 0) {
+                Date date = DateTimeUtil.addDay(new Date(), -1);
+                String timeString = DateTimeUtil.getTimeString(date, DateTimeUtil.DATE_FORMAT_SHORT);
+                if (strPublishDate.compareTo(timeString) >= 0) {
                     hrefList.add(href1);
                 }
             }
