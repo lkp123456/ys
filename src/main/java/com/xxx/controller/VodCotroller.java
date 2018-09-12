@@ -197,6 +197,10 @@ public class VodCotroller {
         String[] sourceNames = sourceNamesList.toArray(new String[]{""});
 
 
+        List<Vod> vodsByName = vodService.getVodsByName(name);
+        if(vodsByName!=null||vodsByName.size()!=0){
+            return "exists";
+        }
         vodService.addVod(name, title, postUrl, content, screenshotUrl, vodType,
                 countryType, publishDate, downloadUrls, magnetUrls, sourceNames);
         return "success";
