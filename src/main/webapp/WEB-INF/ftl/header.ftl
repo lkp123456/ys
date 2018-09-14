@@ -59,14 +59,14 @@
                 </form> -->
                 <form class="navbar-form navbar-left" action="/search.html" method="post">
                     <div class="input-group">
-                        <input type="text" class="form-control" name="vodName" placeholder="Search for...">
+                        <input type="text" class="form-control" name="vodName" placeholder="输入影片完整名称">
                         <span class="input-group-btn">
 								<button class="btn btn-info" type="submit">搜索</button>
 							</span>
                     </div>
                 </form>
-                <button type="button" class="btn  btn-success navbar-btn">Sign in</button>
-                <button type="button" class="btn btn-primary navbar-btn">Log in</button>
+                <#--<button type="button" class="btn  btn-success navbar-btn">Sign in</button>
+                <button type="button" class="btn btn-primary navbar-btn">Log in</button>-->
             </ul>
         </div>
         <!--/.nav-collapse -->
