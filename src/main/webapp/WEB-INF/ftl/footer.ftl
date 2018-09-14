@@ -3,5 +3,6 @@
 <p align="center">天堂电影院 Copyright (c) 2018 All rights reserved</p>
 <script src="https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js"></script>
 <script src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="https://js.users.51.la/19654379.js"></script>
 </body>
 </html>
