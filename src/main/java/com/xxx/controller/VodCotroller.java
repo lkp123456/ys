@@ -93,15 +93,16 @@ public class VodCotroller {
 
 
     @RequestMapping("/index.html")
-    public String index(Model model,@RequestParam(name = "startPage", required = false, defaultValue = "1") int startPage) {
+    public String index(Model model, @RequestParam(name = "startPage", required = false, defaultValue = "1") int startPage) {
         log.debug("index");
         //最新
         PageInfo<Vod> lastVods = vodService.getVods(null, null, startPage, 20);
         model.addAttribute("lastVods", lastVods);
         return "index";
     }
+
     @RequestMapping("/")
-    public String index1(Model model,@RequestParam(name = "startPage", required = false, defaultValue = "1") int startPage) {
+    public String index1(Model model, @RequestParam(name = "startPage", required = false, defaultValue = "1") int startPage) {
         log.debug("index");
         //最新
         PageInfo<Vod> lastVods = vodService.getVods(null, null, startPage, 20);
@@ -117,22 +118,23 @@ public class VodCotroller {
     }
 
     @RequestMapping("/showDownloadLinks/{id}.html")
-    public String showDownloadLinks(@PathVariable(name = "id", required = true) long vodId,Model model) {
+    public String showDownloadLinks(@PathVariable(name = "id", required = true) long vodId, Model model) {
         List<DownloadUrl> downloadUrls = downloadUrlService.getDownloadUrls(vodId);
-        model.addAttribute("downloadUrls",downloadUrls);
+        model.addAttribute("downloadUrls", downloadUrls);
         return "downloadurl";
     }
 
 
     @RequestMapping(value = "/showAddVod.html")
-    public String showAddVod(){
+    public String showAddVod() {
         return "addvod";
     }
+
     @RequestMapping(value = "/saveVod", method = RequestMethod.POST)
     @ResponseBody
     public ResponseResult saveVodByHuman(@RequestParam String title, @RequestParam String name, @RequestParam String content,
                                          //@RequestParam MultipartFile postFile, @RequestParam MultipartFile screenshotFile){
-                                         @RequestParam String postUrl, @RequestParam String screenUrl){
+                                         @RequestParam String postUrl, @RequestParam String screenUrl) {
 //        byte[] postFileBytes = postFile.getBytes();
 //        byte[] screenshotFileBytes = screenshotFile.getBytes();
 
@@ -151,8 +153,6 @@ public class VodCotroller {
 
         return ResponseResult.OK;
     }
-
-
 
 
     @RequestMapping(value = "/addVod", method = RequestMethod.POST)
@@ -198,7 +198,7 @@ public class VodCotroller {
 
 
         List<Vod> vodsByName = vodService.getVodsByName(name);
-        if(vodsByName!=null||vodsByName.size()!=0){
+        if (vodsByName != null && vodsByName.size() != 0) {
             return "exists";
         }
         vodService.addVod(name, title, postUrl, content, screenshotUrl, vodType,
